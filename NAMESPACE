@@ -3,6 +3,7 @@
 export(CMstep2)
 export(dmtin)
 export(rmtin)
+export(tinclust)
 export(tinreg)
 importFrom(Rdpack,reprompt)
 importFrom(cluster,pam)
