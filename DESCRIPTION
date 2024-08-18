@@ -1,0 +1,19 @@
+Package: mtin
+Title: Cluster-Weighted Modeling Using MTIN Distirbution
+Version: 0.0.0.9000
+Authors@R: c(
+     person("Antonio", "Punzo", , "antoniopunzo81@gmail.com", role = "aut"),
+     person("Rajiv", "Iyengar", , "rajiviyengar@me.com", role = c("aut", "cre"))
+     )
+Description: General package for fitting cluster weighted models using the Multivariate Tail Inflated Normal (MTIN) distribution introduced by \insertCite{punzo2021}{mtin}. The MTIN belongs to the family
+     of elliptical distributions and is characterized by mean vector \eqn{\boldsymbol{\mu}}, scale matrix \eqn{\boldsymbol{\Sigma}}, and inflation parameter \eqn{\theta \in (0,1)}. It can also be represented as a
+     normal scale mixture with the uniform distribution as the mixing distribution. The use of the MTIN allows for robust parameter estimation in the presence of mild outliers. \insertCite{punzo2021}{mtin}
+     This package allows for ordinary model-based clustering with conditional mean imputation implemented for missing values. Cluster-weighted regression modeling is implemented, though imputation is only 
+     possible for the response variable. Parameter estimation is achieved by implementation of the ECME algorithm. 
+License: `use_mit_license()`, `use_gpl3_license()` or friends to pick a
+    license
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.2
+Imports: Rdpack
+RdMacros: Rdpack
