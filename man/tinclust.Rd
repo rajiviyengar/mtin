@@ -34,19 +34,14 @@ tinclust(
 }
 \value{
 A list with the following elements:
-\item{Beta}{List of regression coefficients.}
-\item{Mu_x}{List of mean vectors for independent variable.}
-\item{Sigma_x}{List of scale matrices for independent variable.}
-\item{Theta_x}{List of tailedness parameters for independent variable.}
-\item{Sigma_y}{List of scale matrices for dependent variable.}
-\item{Theta_y}{List of tailedness parameters for dependent variable.}
+\item{Mu}{List of cluster means.}
+\item{Sigma}{List of cluster scale matrices.}
+\item{Theta}{List of cluster inflation parameters.}
 \item{Pi}{Mixing proportions.}
 \item{Z}{Expected value of Z.}
-\item{W_y}{Expected value of W for dependent variable.}
-\item{W_X}{Expected value of W for independent variable.}
+\item{W_y}{Expected value of W.}
 \item{cluster}{Membership labels.}
 \item{L}{List of log-likelihoods at each iteration.}
-\item{Model}{Type of model fitted.}
 \item{AIC}{Akaike information criterion.}
 \item{BIC}{Bayesian information criterion.}
 \item{KIC}{Kullback information criterion.}??
