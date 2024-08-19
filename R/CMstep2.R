@@ -5,9 +5,9 @@
 #' @param mu Mean vector.
 #' @param Sigma Scalar matrix.
 #' @param formula Method used to calculate the density: \code{"direct"}, \code{"indirect"}, \code{"series"}.
-#' @param naMat Matrix of missing value indicators for data matrix. 
+#' @param naMat Matrix of missing value indicators for data matrix.
 #' @param obsInd Indices of rows containing complete observations.
-#' @param misInd Indices of rows containing missing observations. 
+#' @param misInd Indices of rows containing missing observations.
 #'
 #' @return
 #' \item{theta}{Estimated inflation parameter.}
@@ -21,6 +21,7 @@
 #'
 #' @export
 CMstep2 <- function(X,weights=NULL,mu,Sigma,formula="direct", naMat = NULL, obsInd = NULL, misInd = NULL){
+     formula <- match.arg(formula)
 
   if(is.vector(X))
     X <- matrix(X,ncol=1)
@@ -38,53 +39,53 @@ CMstep2 <- function(X,weights=NULL,mu,Sigma,formula="direct", naMat = NULL, obsI
 
   if (is.null(naMat)) {
        f <- function(par,weights,X,mu,Sigma,formula){
-            
+
             # ----- #
             # theta #
             # ----- #
-            
+
             theta <- par
-            
+
             # -------------------- #
             # pseudo log-likelihood #
             # -------------------- #
-            
+
             pll <- sum(weights*log(dmtin(x=X,mu=mu,Sigma=Sigma,theta=theta,formula=formula)))
-            
+
             return(pll)
        }
   }
   else {
        f <- function(par,weights,X,mu,Sigma,formula){
-            
+
             # ----- #
             # theta #
             # ----- #
-            
+
             theta <- par
-            
+
             # -------------------- #
             # pseudo loglikelihood #
             # -------------------- #
-            
+
             pll <- sum(weights[obsInd] * log(dmtin(x = X[obsInd,], mu = mu, Sigma = Sigma, theta = theta)))
 
             for (i in misInd) {
                  o <- !naMat[i,]
-                 
+
                  pll <- pll + weights[i] * log(dmtin(x = X[i,o], mu = mu[o], Sigma = Sigma[o,o], theta = theta, formula = formula))
             }
-            
+
             return(pll)
-            
+
        }
   }
-  
+
   suppressWarnings({
        res <- stats::optimize(f=f, interval=c(0,1), weights=weights, X=X, mu=mu, Sigma=Sigma, formula=formula, maximum=TRUE)
   })
-  
-  
+
+
 
   theta <- res$maximum
 
