@@ -9,10 +9,10 @@ CMstep2(
   weights = NULL,
   mu,
   Sigma,
-  formula = "direct",
   naMat = NULL,
   obsInd = NULL,
-  misInd = NULL
+  misInd = NULL,
+  ...
 )
 }
 \arguments{
@@ -24,13 +24,13 @@ CMstep2(
 
 \item{Sigma}{Scalar matrix.}
 
-\item{formula}{Method used to calculate the density: \code{"direct"}, \code{"indirect"}, \code{"series"}.}
-
 \item{naMat}{Matrix of missing value indicators for data matrix.}
 
 \item{obsInd}{Indices of rows containing complete observations.}
 
 \item{misInd}{Indices of rows containing missing observations.}
+
+\item{...}{Additional arguments passed to \code{dmtin}}
 }
 \value{
 \item{theta}{Estimated inflation parameter.}

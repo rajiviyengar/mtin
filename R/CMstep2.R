@@ -4,10 +4,10 @@
 #' @param weights Vector of weights.
 #' @param mu Mean vector.
 #' @param Sigma Scalar matrix.
-#' @param formula Method used to calculate the density: \code{"direct"}, \code{"indirect"}, \code{"series"}.
 #' @param naMat Matrix of missing value indicators for data matrix.
 #' @param obsInd Indices of rows containing complete observations.
 #' @param misInd Indices of rows containing missing observations.
+#' @param ... Additional arguments passed to \code{dmtin}
 #'
 #' @return
 #' \item{theta}{Estimated inflation parameter.}
@@ -20,8 +20,8 @@
 #' CMstep2(X=X,mu=mu,Sigma=Sigma)
 #'
 #' @export
-CMstep2 <- function(X,weights=NULL,mu,Sigma,formula="direct", naMat = NULL, obsInd = NULL, misInd = NULL){
-     formula <- match.arg(formula)
+CMstep2 <- function(X,weights=NULL,mu,Sigma, naMat = NULL, obsInd = NULL, misInd = NULL, ...){
+
 
   if(is.vector(X))
     X <- matrix(X,ncol=1)
@@ -50,13 +50,13 @@ CMstep2 <- function(X,weights=NULL,mu,Sigma,formula="direct", naMat = NULL, obsI
             # pseudo log-likelihood #
             # -------------------- #
 
-            pll <- sum(weights*log(dmtin(x=X,mu=mu,Sigma=Sigma,theta=theta,formula=formula)))
+            pll <- sum(weights*log(dmtin(x=X,mu=mu,Sigma=Sigma,theta=theta,...)))
 
             return(pll)
        }
   }
   else {
-       f <- function(par,weights,X,mu,Sigma,formula){
+       f <- function(par,weights,X,mu,Sigma,...){
 
             # ----- #
             # theta #
@@ -73,7 +73,7 @@ CMstep2 <- function(X,weights=NULL,mu,Sigma,formula="direct", naMat = NULL, obsI
             for (i in misInd) {
                  o <- !naMat[i,]
 
-                 pll <- pll + weights[i] * log(dmtin(x = X[i,o], mu = mu[o], Sigma = Sigma[o,o], theta = theta, formula = formula))
+                 pll <- pll + weights[i] * log(dmtin(x = X[i,o], mu = mu[o], Sigma = Sigma[o,o], theta = theta, ...))
             }
 
             return(pll)
@@ -82,7 +82,7 @@ CMstep2 <- function(X,weights=NULL,mu,Sigma,formula="direct", naMat = NULL, obsI
   }
 
   suppressWarnings({
-       res <- stats::optimize(f=f, interval=c(0,1), weights=weights, X=X, mu=mu, Sigma=Sigma, formula=formula, maximum=TRUE)
+       res <- stats::optimize(f=f, interval=c(0,1), weights=weights, X=X, mu=mu, Sigma=Sigma, maximum=TRUE, ...)
   })
 
 
