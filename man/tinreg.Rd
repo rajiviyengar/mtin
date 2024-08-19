@@ -52,6 +52,19 @@ A list with the following elements:
 \item{AIC}{Akaike information criterion.}
 \item{BIC}{Bayesian information criterion.}
 \item{KIC}{Kullback information criterion.}??
+
+#' @examples
+\donttest{
+data <- palmerpenguins::penguins
+keep <- !rowSums(is.na(data[,3:6])) == 4
+data <- data[keep,]
+
+res <- tinreg(x = data$flipper_length_mm, y = data$bill_length_mm, G = 3, model = 'random')
+plot(res$X, res$Y, col = res$cluster)
+abline(a = res$Beta[[1]][1,1], b = res$Beta[[1]][2,1], col = 'black')
+abline(a = res$Beta[[2]][1,1], b = res$Beta[[2]][2,1], col = 'red')
+abline(a = res$Beta[[3]][1,1], b = res$Beta[[3]][2,1], col = 'green')
+}
 }
 \description{
 Fit cluster weighted regression model using the MTIN distribution
