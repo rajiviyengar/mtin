@@ -21,6 +21,18 @@
 #' \item{BIC}{Bayesian information criterion.}
 #' \item{KIC}{Kullback information criterion.}??
 #'
+#' @examples
+#' \donttest{
+#' data <- palmerpenguins::penguins
+#' keep <- !rowSums(is.na(data[,3:6])) == 4
+#' data <- data[keep,]
+#'
+#' res <- tinclust(x = data[,3:6], G = 3)
+#' plot(res$X[,3], res$X[,1], col = res$cluster)
+#' }
+#'
+#'
+#'
 #' @export
 tinclust <- function(x, G = 1, max_iter = 100, tol = 10^-1, init_method = c("mclust", "kmedoids", "kmeans", "heirarchical"), ..., verbose = FALSE, plot_likelihood = TRUE) {
      ####################
@@ -46,6 +58,7 @@ tinclust <- function(x, G = 1, max_iter = 100, tol = 10^-1, init_method = c("mcl
      Z <- matrix(0, nrow = n, ncol = G)
      W <- matrix(0, nrow = n, ncol = G)
      li <- matrix(0, nrow = n, ncol = G)
+     iter <- 0
 
      #########################
      # Store Log-Likelihoods #

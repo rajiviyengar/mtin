@@ -49,3 +49,16 @@ A list with the following elements:
 \description{
 Model based clustering with MTIN distribution
 }
+\examples{
+\donttest{
+data <- palmerpenguins::penguins
+keep <- !rowSums(is.na(data[,3:6])) == 4
+data <- data[keep,]
+
+res <- tinclust(x = data[,3:6], G = 3)
+plot(res$X[,3], res$X[,1], col = res$cluster)
+}
+
+
+
+}
