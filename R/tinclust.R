@@ -106,7 +106,7 @@ tinclust <- function(x, G = 1, max_iter = 100, tol = 10^-1, init_method = c("mcl
                pObs <- sum(o)
 
                for (g in 1:G) {
-                    delta <- mahalanobis(as.matrix(x[i,o], ncol = pObs), Mus[[g]][o], Sigmas_y[[g]][o,o])
+                    delta <- mahalanobis(as.matrix(x[i,o], ncol = pObs), Mus[[g]][o], Sigmas[[g]][o,o])
                     num <- max(2 * ((zipfR::Igamma((pObs/2)+2, (1-Thetas[g])*delta/2, lower = FALSE) - zipfR::Igamma((pObs/2)+2, delta/2, lower = FALSE))), 10^(-322))
                     den <- max(delta * ((zipfR::Igamma((pObs/2)+1, (1-Thetas[g])*delta/2, lower = FALSE) - zipfR::Igamma((pObs/2)+1, delta/2, lower = FALSE))), num)
                     W[i,g] <- num / den
@@ -132,7 +132,7 @@ tinclust <- function(x, G = 1, max_iter = 100, tol = 10^-1, init_method = c("mcl
                }
 
                Mus[[g]] <- colSums(Z[,g] * W[,g] * x) / sum(Z[,g] * W[,g])
-               Sigmas[[g]] <- crossprod(sqrt(Z[,g] * W[,g]) * sweep(x, 2, Mus[[g]]))
+               sig_temp <- crossprod(sqrt(Z[obs,g] * W[obs,g]) * sweep(x[obs,], 2, Mus[[g]]))
 
                for (i in mis) {
                     m <- M[i,]
@@ -144,10 +144,10 @@ tinclust <- function(x, G = 1, max_iter = 100, tol = 10^-1, init_method = c("mcl
                     cross[m,o] <- t(cross[o,m])
                     cross[m,m] <- Z[i,g] * (Sigmas[[g]][m,m] - Sigmas[[g]][m,o] %*% solve(Sigmas[[g]][o,o]) %*% Sigmas[[g]][o,m]) + Z[i,g] * W[i,g] * (x[i,m] - Mus[[g]][m]) %*% t(x[i,m] - Mus[[g]][m])
 
-                    Sigmas[[g]] <- Sigmas[[g]] + cross
+                    sig_temp <- sig_temp + cross
                }
 
-               Sigmas[[g]] <- Sigmas[[g]] / sum(Z[,g])
+               Sigmas[[g]] <- sig_temp / sum(Z[,g])
                Thetas[g] <- CMstep2(as.matrix(x, ncol = p), Z[,g], Mus[[g]], Sigmas[[g]], naMat = M, obsInd = obs, misInd = mis, ...)
           }
 
@@ -155,7 +155,7 @@ tinclust <- function(x, G = 1, max_iter = 100, tol = 10^-1, init_method = c("mcl
           # Compute Likelihood #
           ######################
           for (g in 1:G) {
-               li[,g] <- sum(Z[,g]) * dmtin(as.matrix(x[obs,], ncol = p), Mus[[g]], Sigmas[[g]], Thetas[g], ...) / n
+               li[obs,g] <- sum(Z[,g]) * dmtin(as.matrix(x[obs,], ncol = p), Mus[[g]], Sigmas[[g]], Thetas[g], ...) / n
           }
 
           for (i in mis) {
@@ -230,6 +230,4 @@ tinclust <- function(x, G = 1, max_iter = 100, tol = 10^-1, init_method = c("mcl
      }
 
      return(list(Mu = Mus, Sigma = Sigmas, Theta = Thetas, X = x, Pi = Pis, Z = Z, W = W, L = L, cluster = cluster, iterations = iter, npar = total_params, AIC = AIC, BIC = BIC, KIC = KIC, KICc = KICc, AIC3 = AIC3, CAIC = CAIC, AICc = AICc))
-
-
 }
