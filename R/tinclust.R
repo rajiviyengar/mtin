@@ -4,10 +4,10 @@
 #' @param G An integer representing the number of clusters.
 #' @param max_iter An integer representing the maximum number of iterations.
 #' @param tol Float representing tolerance for Aitken's acceleration criterion.
-#' @param formula Method used to calculate density passed to \code{dmtin}: \code{"direct"}, \code{"indirect"}, \code{"series"}
 #' @param init_method Model used for initialization: \code{'mclust'}, \code{"kmedoids"}, \code{"kmeans"}, \code{"heirarchical"}
 #' @param verbose Print log-likelihood at every iteration.
 #' @param plot_likelihood Plot log-likelihoods after convergence.
+#' @param ... Additional arguments passed to \code{dmtin}
 #' @return A list with the following elements:
 #' \item{Mu}{List of cluster means.}
 #' \item{Sigma}{List of cluster scale matrices.}
@@ -22,9 +22,7 @@
 #' \item{KIC}{Kullback information criterion.}??
 #'
 #' @export
-tinclust <- function(x, G = 1, max_iter = 100, tol = 10^-1, formula = c("direct", "indirect", "series"), init_method = c("mclust", "kmedoids", "kmeans", "heirarchical"), verbose = FALSE, plot_likelihood = TRUE) {
-     formula <- match.arg(formula)
-
+tinclust <- function(x, G = 1, max_iter = 100, tol = 10^-1, init_method = c("mclust", "kmedoids", "kmeans", "heirarchical"), ..., verbose = FALSE, plot_likelihood = TRUE) {
      ####################
      # Input Formatting #
      ####################
@@ -64,14 +62,14 @@ tinclust <- function(x, G = 1, max_iter = 100, tol = 10^-1, formula = c("direct"
           Mus[[g]] <- colMeans(matrix(x[Z[,g] == 1,], ncol = p))
           Sigmas[[g]] <- cov(matrix(x[Z[,g] == 1,], ncol = p))
           Pis[g] <- sum(Z[,g]) / length(obs)
-          li[obs,g] <- Pis[g] * dmtin(matrix(x[obs,], ncol = p), Mus[[g]], Sigmas[[g]], Thetas[g], formula = formula)
+          li[obs,g] <- Pis[g] * dmtin(matrix(x[obs,], ncol = p), Mus[[g]], Sigmas[[g]], Thetas[g], ...)
      }
 
      for (i in mis) {
           m <- M[i,]
           o <- !m
 
-          li[i,g] <- Pis[g] * dmtin(x[i,o], Mus[[g]][o], Sigmas[[g]][o,o], Thetas[g], formula = formula)
+          li[i,g] <- Pis[g] * dmtin(x[i,o], Mus[[g]][o], Sigmas[[g]][o,o], Thetas[g], ...)
      }
 
 
@@ -137,21 +135,21 @@ tinclust <- function(x, G = 1, max_iter = 100, tol = 10^-1, formula = c("direct"
                }
 
                Sigmas[[g]] <- Sigmas[[g]] / sum(Z[,g])
-               Thetas[g] <- CMstep2(as.matrix(x, ncol = p), Z[,g], Mus[[g]], Sigmas[[g]], formula = formula, naMat = M, obsInd = obs, misInd = mis)
+               Thetas[g] <- CMstep2(as.matrix(x, ncol = p), Z[,g], Mus[[g]], Sigmas[[g]], naMat = M, obsInd = obs, misInd = mis, ...)
           }
 
           ######################
           # Compute Likelihood #
           ######################
           for (g in 1:G) {
-               li[,g] <- sum(Z[,g]) * dmtin(as.matrix(x[obs,], ncol = p), Mus[[g]], Sigmas[[g]], Thetas[g], formula = formula) / n
+               li[,g] <- sum(Z[,g]) * dmtin(as.matrix(x[obs,], ncol = p), Mus[[g]], Sigmas[[g]], Thetas[g], ...) / n
           }
 
           for (i in mis) {
                o <- !M[i,]
 
                for (g in 1:G) {
-                    li[i,g] <- sum(Z[,g]) * dmtin(x[i,o], Mus[[g]][o], Sigmas[[g]][o,o], Thetas[g], formula = formula)
+                    li[i,g] <- sum(Z[,g]) * dmtin(x[i,o], Mus[[g]][o], Sigmas[[g]][o,o], Thetas[g], ...)
                }
           }
 

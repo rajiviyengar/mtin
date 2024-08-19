@@ -9,8 +9,8 @@ tinclust(
   G = 1,
   max_iter = 100,
   tol = 10^-1,
-  formula = c("direct", "indirect", "series"),
   init_method = c("mclust", "kmedoids", "kmeans", "heirarchical"),
+  ...,
   verbose = FALSE,
   plot_likelihood = TRUE
 )
@@ -24,9 +24,9 @@ tinclust(
 
 \item{tol}{Float representing tolerance for Aitken's acceleration criterion.}
 
-\item{formula}{Method used to calculate density passed to \code{dmtin}: \code{"direct"}, \code{"indirect"}, \code{"series"}}
-
 \item{init_method}{Model used for initialization: \code{'mclust'}, \code{"kmedoids"}, \code{"kmeans"}, \code{"heirarchical"}}
+
+\item{...}{Additional arguments passed to \code{dmtin}}
 
 \item{verbose}{Print log-likelihood at every iteration.}
 
