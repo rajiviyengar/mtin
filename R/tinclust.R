@@ -219,21 +219,4 @@ tinclust <- function(x, G = 1, max_iter = 100, tol = 10^-1, init_method = c("mcl
      return(list(Mu = Mus, Sigma = Sigmas, Theta = Thetas, X = x, Pi = Pis, Z = Z, W = W, L = L, cluster = cluster, iterations = iter, npar = total_params, AIC = AIC, BIC = BIC, KIC = KIC, KICc = KICc, AIC3 = AIC3, CAIC = CAIC, AICc = AICc))
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 }
