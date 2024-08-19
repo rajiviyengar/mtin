@@ -4,7 +4,13 @@
 \alias{dmtin}
 \title{Density of a MTIN distribution.}
 \usage{
-dmtin(x, mu = rep(0, d), Sigma, theta = 0.01, formula = "direct")
+dmtin(
+  x,
+  mu = rep(0, d),
+  Sigma,
+  theta = 0.01,
+  formula = c("direct", "indirect", "series")
+)
 }
 \arguments{
 \item{x}{Matrix.}
