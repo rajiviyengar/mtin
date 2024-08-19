@@ -2,9 +2,18 @@
 % Please edit documentation in R/tinclust.R
 \name{tinclust}
 \alias{tinclust}
-\title{Fit cluster weighted regression model using the MTIN distribution}
+\title{Model based clustering with MTIN distribution}
 \usage{
-tinclust(x)
+tinclust(
+  x,
+  G = 1,
+  max_iter = 100,
+  tol = 10^-1,
+  formula = c("direct", "indirect", "series"),
+  init_method = c("mclust", "kmedoids", "kmeans", "heirarchical"),
+  verbose = FALSE,
+  plot_likelihood = TRUE
+)
 }
 \arguments{
 \item{x}{A data matrix.}
@@ -18,6 +27,10 @@ tinclust(x)
 \item{formula}{Method used to calculate density passed to \code{dmtin}: \code{"direct"}, \code{"indirect"}, \code{"series"}}
 
 \item{init_method}{Model used for initialization: \code{'mclust'}, \code{"kmedoids"}, \code{"kmeans"}, \code{"heirarchical"}}
+
+\item{verbose}{Print log-likelihood at every iteration.}
+
+\item{plot_likelihood}{Plot log-likelihoods after convergence.}
 }
 \value{
 A list with the following elements:
@@ -39,5 +52,5 @@ A list with the following elements:
 \item{KIC}{Kullback information criterion.}??
 }
 \description{
-Fit cluster weighted regression model using the MTIN distribution
+Model based clustering with MTIN distribution
 }
