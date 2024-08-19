@@ -46,9 +46,9 @@ CMstep2 <- function(X,weights=NULL,mu,Sigma, naMat = NULL, obsInd = NULL, misInd
 
             theta <- par
 
-            # -------------------- #
+            # --------------------- #
             # pseudo log-likelihood #
-            # -------------------- #
+            # --------------------- #
 
             pll <- sum(weights*log(dmtin(x=X,mu=mu,Sigma=Sigma,theta=theta,...)))
 
@@ -68,7 +68,7 @@ CMstep2 <- function(X,weights=NULL,mu,Sigma, naMat = NULL, obsInd = NULL, misInd
             # pseudo loglikelihood #
             # -------------------- #
 
-            pll <- sum(weights[obsInd] * log(dmtin(x = X[obsInd,], mu = mu, Sigma = Sigma, theta = theta)))
+            pll <- sum(weights[obsInd] * log(dmtin(x = X[obsInd,], mu = mu, Sigma = Sigma, theta = theta, ...)))
 
             for (i in misInd) {
                  o <- !naMat[i,]
