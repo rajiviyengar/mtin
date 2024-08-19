@@ -1,4 +1,4 @@
-#' Fit cluster weighted regression model using the MTIN distribution
+#' Model based clustering with MTIN distribution
 #'
 #' @param x A data matrix.
 #' @param G An integer representing the number of clusters.
@@ -8,21 +8,15 @@
 #' @param init_method Model used for initialization: \code{'mclust'}, \code{"kmedoids"}, \code{"kmeans"}, \code{"heirarchical"}
 #' @param verbose Print log-likelihood at every iteration.
 #' @param plot_likelihood Plot log-likelihoods after convergence.
-#'
 #' @return A list with the following elements:
-#' \item{Beta}{List of regression coefficients.}
-#' \item{Mu_x}{List of mean vectors for independent variable.}
-#' \item{Sigma_x}{List of scale matrices for independent variable.}
-#' \item{Theta_x}{List of tailedness parameters for independent variable.}
-#' \item{Sigma_y}{List of scale matrices for dependent variable.}
-#' \item{Theta_y}{List of tailedness parameters for dependent variable.}
+#' \item{Mu}{List of cluster means.}
+#' \item{Sigma}{List of cluster scale matrices.}
+#' \item{Theta}{List of cluster inflation parameters.}
 #' \item{Pi}{Mixing proportions.}
 #' \item{Z}{Expected value of Z.}
-#' \item{W_y}{Expected value of W for dependent variable.}
-#' \item{W_X}{Expected value of W for independent variable.}
+#' \item{W_y}{Expected value of W.}
 #' \item{cluster}{Membership labels.}
 #' \item{L}{List of log-likelihoods at each iteration.}
-#' \item{Model}{Type of model fitted.}
 #' \item{AIC}{Akaike information criterion.}
 #' \item{BIC}{Bayesian information criterion.}
 #' \item{KIC}{Kullback information criterion.}??
@@ -40,6 +34,8 @@ tinclust <- function(x, G = 1, max_iter = 100, tol = 10^-1, formula = c("direct"
      p <- ncol(x)
      mis <- which(as.logical(rowSums(M)))
      obs <- which(!as.logical(rowSums(M)))
+     if (p == 1 && any(is.na(x))) stop("NAs not allowed with univariate data.")
+     if (any(rowSums(M) == p)) stop("Remove observations that contain only NAs.")
 
 
      ####################
@@ -65,10 +61,10 @@ tinclust <- function(x, G = 1, max_iter = 100, tol = 10^-1, formula = c("direct"
      Z <- init_clusters(x, G, obsInd = obs, init_method = init_method)
 
      for (g in 1:G) {
-          Mus[[g]] <- colMeans(x[Z[,g] == 1,])
-          Sigmas[[g]] <- cov(x[Z[,g] == 1,])
+          Mus[[g]] <- colMeans(matrix(x[Z[,g] == 1,], ncol = p))
+          Sigmas[[g]] <- cov(matrix(x[Z[,g] == 1,], ncol = p))
           Pis[g] <- sum(Z[,g]) / length(obs)
-          li[obs,g] <- Pis[g] * dmtin(x[obs,], Mus[[g]], Sigmas[[g]], Thetas[g], formula = formula)
+          li[obs,g] <- Pis[g] * dmtin(matrix(x[obs,], ncol = p), Mus[[g]], Sigmas[[g]], Thetas[g], formula = formula)
      }
 
      for (i in mis) {
@@ -141,14 +137,14 @@ tinclust <- function(x, G = 1, max_iter = 100, tol = 10^-1, formula = c("direct"
                }
 
                Sigmas[[g]] <- Sigmas[[g]] / sum(Z[,g])
-               Thetas[g] <- CMstep2(x, Z[,g], Mus[[g]], Sigmas[[g]], formula = formula, naMat = M, obsInd = obs, misInd = mis)
+               Thetas[g] <- CMstep2(as.matrix(x, ncol = p), Z[,g], Mus[[g]], Sigmas[[g]], formula = formula, naMat = M, obsInd = obs, misInd = mis)
           }
 
           ######################
           # Compute Likelihood #
           ######################
           for (g in 1:G) {
-               li[,g] <- sum(Z[,g]) * dmtin(x[obs,], Mus[[g]], Sigmas[[g]], Thetas[g], formula = formula) / n
+               li[,g] <- sum(Z[,g]) * dmtin(as.matrix(x[obs,], ncol = p), Mus[[g]], Sigmas[[g]], Thetas[g], formula = formula) / n
           }
 
           for (i in mis) {
