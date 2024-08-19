@@ -13,4 +13,14 @@ General package for fitting cluster weighted models using the Multivariate Tail 
 \insertRef{punzo2021}{mtin}
 }
 }
+\author{
+\strong{Maintainer}: Rajiv Iyengar \email{rajiviyengar@me.com}
+
+Authors:
+\itemize{
+  \item Antonio Punzo \email{antoniopunzo81@gmail.com}
+  \item Cristina Tortora \email{cristina.tortora@sjsu.edu}
+}
+
+}
 \keyword{internal}

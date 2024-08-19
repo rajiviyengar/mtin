@@ -3,7 +3,7 @@ Title: Cluster-Weighted Modeling Using MTIN Distirbution
 Version: 0.0.0.9000
 Authors@R: c(
      person("Antonio", "Punzo", , "antoniopunzo81@gmail.com", role = "aut"),
-     person("Cristina", "Tortora", , "cristina.tortora@sjsu.edu", role = "aut")
+     person("Cristina", "Tortora", , "cristina.tortora@sjsu.edu", role = "aut"),
      person("Rajiv", "Iyengar", , "rajiviyengar@me.com", role = c("aut", "cre"))
      )
 Description: General package for fitting cluster weighted models using the Multivariate Tail Inflated Normal (MTIN) distribution introduced by \insertCite{punzo2021}{mtin}. The MTIN belongs to the family
@@ -16,5 +16,5 @@ License: `use_mit_license()`, `use_gpl3_license()` or friends to pick a
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2
-Imports: Rdpack, mclust, cluster, zipfR
+Imports: Rdpack, mclust, cluster, zipfR, palmerpenguins
 RdMacros: Rdpack
