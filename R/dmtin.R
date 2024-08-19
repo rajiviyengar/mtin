@@ -13,7 +13,8 @@
 #' dmtin(x,mu=rep(0,d),Sigma=diag(d),theta=0.4,formula="indirect")
 #'
 #' @export
-dmtin <- function(x, mu = rep(0,d), Sigma, theta = 0.01, formula = "direct"){
+dmtin <- function(x, mu = rep(0,d), Sigma, theta = 0.01, formula = c("direct", "indirect", "series")){
+     formula <- match.arg(formula)
 
   if(missing(Sigma))
     stop("Sigma is missing")
