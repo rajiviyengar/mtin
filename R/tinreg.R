@@ -33,11 +33,9 @@ tinreg <- function(x, y, G = 1, max_iter = 100, tol = 10^-1, model = c("fixed", 
      formula <- match.arg(formula)
 
      if(model == 'fixed') {
-
           ####################
           # Input formatting #
           ####################
-
           x <- as.matrix(x)
           if (any(is.na(x))) stop("Missing values in X are not allowed.")
           y <- as.matrix(y)
@@ -48,11 +46,11 @@ tinreg <- function(x, y, G = 1, max_iter = 100, tol = 10^-1, model = c("fixed", 
           n <- nrow(x)
           p_y <- ncol(y)
           p_x <- ncol(x)
+          if (any(rowSums(M_y) == p_y)) stop("Remove observations containing only NAs")
 
           ############################
           # Declare Model Parameters #
           ############################
-
           Betas <- rep(list(matrix(nrow = p_x, ncol = p_y, data = rep(0, p_y*p_x))))
           Sigmas_y <- rep(list(matrix(data = rep(0, p_y^2), nrow = p_y)))
           Pis <- rep(0,G)
@@ -65,7 +63,6 @@ tinreg <- function(x, y, G = 1, max_iter = 100, tol = 10^-1, model = c("fixed", 
           #########################
           # Store Log-Likelihoods #
           #########################
-
           li <- matrix(0, nrow = n, ncol = G)
           L <- rep(0, max_iter)
           diffs <- rep(0, max_iter)
@@ -73,13 +70,12 @@ tinreg <- function(x, y, G = 1, max_iter = 100, tol = 10^-1, model = c("fixed", 
           #########################
           # Initialize Parameters #
           #########################
-
           Z <- init_clusters(cbind(x,y), G, obsInd = obs_y, init_method = init_method)
 
           for (g in 1:G) {
-               Betas[[g]] <- solve(t(x[obs_y,]) %*% diag(Z[obs_y,g]) %*% x[obs_y,]) %*% t(x[obs_y,]) %*% diag(Z[obs_y,g]) %*% y[obs_y,]
+               Betas[[g]] <- solve(t(as.matrix(x[obs_y,], ncol = p_x)) %*% diag(Z[obs_y,g]) %*% as.matrix(x[obs_y,], ncol = p_x)) %*% t(as.matrix(x[obs_y,], ncol = p_x)) %*% diag(Z[obs_y,g]) %*% as.matrix(y[obs_y,], ncol = p_y)
                Sigmas_y[[g]] <- cov(as.matrix(y[as.logical(Z[, g]), ], ncol = p_y))
-               y_center[[g]][obs_y,] <- y[obs_y,] - x[obs_y,] %*% Betas[[g]]
+               y_center[[g]][obs_y,] <- y[obs_y,] - as.matrix(x[obs_y,], ncol = p_x) %*% Betas[[g]]
                li[obs_y,g] <- sum(Z[,g]) * dmtin(as.matrix(y_center[[g]][obs_y,], ncol = p_y), rep(0, p_y), Sigmas_y[[g]], Thetas_y[g], formula = formula) / n
           }
 
@@ -93,16 +89,14 @@ tinreg <- function(x, y, G = 1, max_iter = 100, tol = 10^-1, model = c("fixed", 
                }
           }
 
+
           ##################
           # ECME Algorithm #
           ##################
-
           for (k in 1:max_iter) {
-
                #############
                # E-Step: Y #
                #############
-
                for (i in mis_y) {
                     m <- M_y[i,]
                     o <- !m
@@ -118,7 +112,6 @@ tinreg <- function(x, y, G = 1, max_iter = 100, tol = 10^-1, model = c("fixed", 
                #############
                # E-Step: W #
                #############
-
                for (g in 1:G) {
                     delta <- mahalanobis(as.matrix(y_center[[g]][obs_y,], ncol = p_y), rep(0, p_y), Sigmas_y[[g]], tol = 1e-20)
                     num <- pmax(2 * ((zipfR::Igamma((p_y/2)+2, (1-Thetas_y[g])*delta/2, lower = FALSE) - zipfR::Igamma((p_y/2)+2, delta/2, lower = FALSE))), rep(10^(-322), length(obs_y)))
@@ -142,7 +135,6 @@ tinreg <- function(x, y, G = 1, max_iter = 100, tol = 10^-1, model = c("fixed", 
                #############
                # E-Step: Z #
                #############
-
                for (g in 1:G) {
                     Z[,g] <- li[,g] / rowSums(li)
                }
@@ -150,7 +142,6 @@ tinreg <- function(x, y, G = 1, max_iter = 100, tol = 10^-1, model = c("fixed", 
                ###########
                # CM-Step #
                ###########
-
                for (g in 1:G) {
 
                     for (i in mis_y) {
@@ -163,8 +154,8 @@ tinreg <- function(x, y, G = 1, max_iter = 100, tol = 10^-1, model = c("fixed", 
 
                     }
 
-                    Betas[[g]] <- solve(t(x) %*% diag(Z[,g] * W_y[,g]) %*% x) %*% t(x) %*% diag(Z[,g] * W_y[,g]) %*% y
-                    sig_temp_y <- crossprod(sqrt(Z[obs_y,g] * W_y[obs_y,g]) * (y[obs_y,] - x[obs_y,] %*% Betas[[g]]))
+                    Betas[[g]] <- solve(t(x) %*% diag(Z[,g] * W_y[,g]) %*% x) %*% t(x) %*% diag(Z[,g] * W_y[,g]) %*% as.matrix(y, ncol = p_y)
+                    sig_temp_y <- crossprod(sqrt(Z[obs_y,g] * W_y[obs_y,g]) * (as.matrix(y[obs_y,], ncol = p_y) - x[obs_y,] %*% Betas[[g]]))
 
                     for (i in mis_y) {
                          m <- M_y[i,]
@@ -189,15 +180,14 @@ tinreg <- function(x, y, G = 1, max_iter = 100, tol = 10^-1, model = c("fixed", 
                     Sigmas_y[[g]] <- sig_temp_y / sum(Z[,g])
                     Pis[g] <- sum(Z[,g]) / n
                     y_center[[g]] <- y - x %*% Betas[[g]]
-                    Thetas_y[g] <- CMstep2(y_center[[g]], Z[,g], rep(0, p_y), Sigmas_y[[g]], naMat = M_y, obsInd = obs_y, misInd = mis_y, formula = formula)
+                    Thetas_y[g] <- CMstep2(as.matrix(y_center[[g]], ncol = p_y), Z[,g], rep(0, p_y), Sigmas_y[[g]], naMat = M_y, obsInd = obs_y, misInd = mis_y, formula = formula)
                }
 
                ######################
                # Compute Likelihood #
                ######################
-
                for (g in 1:G) {
-                    li[obs_y,g] <- sum(Z[,g]) * dmtin(y_center[[g]][obs_y,], rep(0, p_y), Sigmas_y[[g]], Thetas_y[g], formula = formula) / n
+                    li[obs_y,g] <- sum(Z[,g]) * dmtin(as.matrix(y_center[[g]][obs_y,], ncol = p_y), rep(0, p_y), Sigmas_y[[g]], Thetas_y[g], formula = formula) / n
 
                }
 
@@ -217,7 +207,6 @@ tinreg <- function(x, y, G = 1, max_iter = 100, tol = 10^-1, model = c("fixed", 
                ########################
                # Aitken's Convergence #
                ########################
-
                if (k > 2) {
                     ak <- (L[k] - L[k-1])/(L[k-1] - L[k-2])
                     linf <- L[k-1] + 1/(1 - ak) * (L[k] - L[k-1])
@@ -238,7 +227,6 @@ tinreg <- function(x, y, G = 1, max_iter = 100, tol = 10^-1, model = c("fixed", 
           ##################
           # Prepare Output #
           ##################
-
           for (i in mis_y) {
                g <- which.max(Z[i,])
                m <- M_y[i,]
@@ -286,7 +274,6 @@ tinreg <- function(x, y, G = 1, max_iter = 100, tol = 10^-1, model = c("fixed", 
           ####################
           # Input Formatting #
           ####################
-
           x <- as.matrix(x)
           y <- as.matrix(y)
           x <- cbind(rep(1, nrow(x)), x)
@@ -298,11 +285,11 @@ tinreg <- function(x, y, G = 1, max_iter = 100, tol = 10^-1, model = c("fixed", 
           p_y <- ncol(y)
           p_x <- ncol(x)
           iter <- 0
+          if (any(rowSums(M_y) == p_y)) stop("Remove observations containing only NAs")
 
           ####################
           # Model Parameters #
           ####################
-
           Betas <- rep(list(matrix(nrow = p_x, ncol = p_y, data = rep(0, p_y*p_x))))
           Sigmas_y <- rep(list(matrix(data = rep(0, p_y^2), nrow = p_y)))
           Sigmas_x <- rep(list(matrix(data = rep(0, p_x^2), nrow = p_x)))
@@ -325,15 +312,14 @@ tinreg <- function(x, y, G = 1, max_iter = 100, tol = 10^-1, model = c("fixed", 
           #########################
           # Initialize Parameters #
           #########################
-
           Z <- init_clusters(cbind(x,y), G, obsInd = obs_y, init_method = init_method)
 
           for (g in 1:G) {
-               Betas[[g]] <- solve(t(x[obs_y,]) %*% diag(Z[obs_y,g]) %*% x[obs_y,]) %*% t(x[obs_y,]) %*% diag(Z[obs_y,g]) %*% y[obs_y,]
+               Betas[[g]] <- solve(t(x[obs_y,]) %*% diag(Z[obs_y,g]) %*% x[obs_y,]) %*% t(x[obs_y,]) %*% diag(Z[obs_y,g]) %*% as.matrix(y[obs_y,], ncol = p_y)
                Mus_x[[g]] <- colSums(as.matrix(x[as.logical(Z[, g]),2:p_x], ncol = p_x - 1)) / sum(Z[,g])
                Sigmas_y[[g]] <- cov(as.matrix(y[as.logical(Z[, g]), ], ncol = p_y))
                Sigmas_x[[g]] <- cov(as.matrix(x[as.logical(Z[, g]), 2:p_x], ncol = p_x))
-               y_center[[g]][obs_y,] <- y[obs_y,] - x[obs_y,] %*% Betas[[g]]
+               y_center[[g]][obs_y,] <- as.matrix(y[obs_y,], ncol = p_y) - x[obs_y,] %*% Betas[[g]]
                li[,g] <- sum(Z[,g]) * dmtin(as.matrix(x[,2:p_x], ncol = p_x - 1), Mus_x[[g]], Sigmas_x[[g]], Thetas_x[g], formula = formula) / n
                li[obs_y,g] <- li[obs_y,g] * dmtin(as.matrix(y_center[[g]][obs_y,], ncol = p_y), rep(0, p_y), Sigmas_y[[g]], Thetas_y[g], formula = formula)
           }
@@ -351,13 +337,10 @@ tinreg <- function(x, y, G = 1, max_iter = 100, tol = 10^-1, model = c("fixed", 
           ##################
           # ECME Algorithm #
           ##################
-
           for (k in 1:max_iter) {
-
                #############
                # E-Step: Y #
                #############
-
                for (i in mis_y) {
                     m <- M_y[i,]
                     o <- !m
@@ -372,7 +355,6 @@ tinreg <- function(x, y, G = 1, max_iter = 100, tol = 10^-1, model = c("fixed", 
                #############
                # E-Step: W #
                #############
-
                for (g in 1:G) {
                     delta <- mahalanobis(as.matrix(y_center[[g]][obs_y,], ncol = p_y), rep(0, p_y), Sigmas_y[[g]], tol = 1e-20)
                     num <- pmax(2 * ((zipfR::Igamma((p_y/2)+2, (1-Thetas_y[g])*delta/2, lower = FALSE) - zipfR::Igamma((p_y/2)+2, delta/2, lower = FALSE))), rep(10^(-322), length(obs_y)))
@@ -402,7 +384,6 @@ tinreg <- function(x, y, G = 1, max_iter = 100, tol = 10^-1, model = c("fixed", 
                #############
                # E-Step: Z #
                #############
-
                for (g in 1:G) {
                     Z[,g] <- li[,g] / rowSums(li)
                }
@@ -410,7 +391,6 @@ tinreg <- function(x, y, G = 1, max_iter = 100, tol = 10^-1, model = c("fixed", 
                ###########
                # CM-Step #
                ###########
-
                for (g in 1:G) {
 
                     for (i in mis_y) {
@@ -422,10 +402,10 @@ tinreg <- function(x, y, G = 1, max_iter = 100, tol = 10^-1, model = c("fixed", 
                          y[i,m] <- Mu[m] + Sigmas_y[[g]][m,o] %*% solve(Sigmas_y[[g]][o,o]) %*% (y[i,o] - Mu[o])
                     }
 
-                    Mus_x[[g]] <- colSums(Z[,g] * W_x[,g] * x[,2:p_x]) / sum(Z[,g] * W_x[,g])
-                    Betas[[g]] <- solve(t(x) %*% diag(Z[,g] * W_y[,g]) %*% x) %*% t(x) %*% diag(Z[,g] * W_y[,g]) %*% y
-                    sig_temp_y <- crossprod(sqrt(Z[obs_y,g] * W_y[obs_y,g]) * (y[obs_y,] - x[obs_y,] %*% Betas[[g]]))
-                    sig_temp_x <- crossprod(sqrt(Z[,g] * W_x[,g]) * sweep(x[, 2:p_x], 2, Mus_x[[g]]))
+                    Mus_x[[g]] <- colSums(Z[,g] * W_x[,g] * as.matrix(x[,2:p_x], ncol = p_x - 1)) / sum(Z[,g] * W_x[,g])
+                    Betas[[g]] <- solve(t(x) %*% diag(Z[,g] * W_y[,g]) %*% x) %*% t(x) %*% diag(Z[,g] * W_y[,g]) %*% as.matrix(y, ncol = p_y)
+                    sig_temp_y <- crossprod(sqrt(Z[obs_y,g] * W_y[obs_y,g]) * (as.matrix(y[obs_y,], ncol = p_y) - x[obs_y,] %*% Betas[[g]]))
+                    sig_temp_x <- crossprod(sqrt(Z[,g] * W_x[,g]) * sweep(as.matrix(x[, 2:p_x], ncol = p_x - 1), 2, Mus_x[[g]]))
 
                     for (i in mis_y) {
                          m <- M_y[i,]
@@ -450,20 +430,20 @@ tinreg <- function(x, y, G = 1, max_iter = 100, tol = 10^-1, model = c("fixed", 
                     Sigmas_y[[g]] <- sig_temp_y / sum(Z[,g])
                     Sigmas_x[[g]] <- sig_temp_x / sum(Z[,g])
                     Pis[g] <- sum(Z[,g]) / n
-                    y_center[[g]] <- y - x %*% Betas[[g]]
-                    Thetas_y[g] <- CMstep2(y_center[[g]], Z[,g], rep(0, p_y), Sigmas_y[[g]], naMat = M_y, obsInd = obs_y, misInd = mis_y, formula = formula)
-                    Thetas_x[g] <- CMstep2(x[,2:p_x], Z[,g], Mus_x[[g]], Sigmas_x[[g]], formula = formula)
+                    y_center[[g]] <- as.matrix(y, ncol = p_y) - x %*% Betas[[g]]
+                    Thetas_y[g] <- CMstep2(as.matrix(y_center[[g]], ncol = p_y), Z[,g], rep(0, p_y), Sigmas_y[[g]], naMat = M_y, obsInd = obs_y, misInd = mis_y, formula = formula)
+                    Thetas_x[g] <- CMstep2(as.matrix(x[,2:p_x], ncol = p_x - 1), Z[,g], Mus_x[[g]], Sigmas_x[[g]], formula = formula)
 
                }
 
-
-               # Compute Likelihood
+               ######################
+               # Compute Likelihood #
+               ######################
                for (g in 1:G) {
-                    li[,g] <- sum(Z[,g]) * dmtin(x[,2:p_x], Mus_x[[g]], Sigmas_x[[g]], Thetas_x[g], formula = formula) / n
-                    li[obs_y,g] <- li[obs_y,g] * dmtin(y_center[[g]][obs_y,], rep(0, p_y), Sigmas_y[[g]], Thetas_y[g], formula = formula)
+                    li[,g] <- sum(Z[,g]) * dmtin(as.matrix(x[,2:p_x], ncol = p_x - 1), Mus_x[[g]], Sigmas_x[[g]], Thetas_x[g], formula = formula) / n
+                    li[obs_y,g] <- li[obs_y,g] * dmtin(as.matrix(y_center[[g]][obs_y,], ncol = p_y), rep(0, p_y), Sigmas_y[[g]], Thetas_y[g], formula = formula)
 
                }
-
 
                for(i in mis_y) {
                     o <- !M_y[i,]
@@ -500,7 +480,6 @@ tinreg <- function(x, y, G = 1, max_iter = 100, tol = 10^-1, model = c("fixed", 
           ##################
           # Prepare Output #
           ##################
-
           for (i in mis_y) {
                g <- which.max(Z[i,])
                m <- M_y[i,]
