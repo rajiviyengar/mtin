@@ -43,6 +43,7 @@ dmtin <- function(x, mu = rep(0,d), Sigma, theta = 0.01, formula = c("direct", "
     pdfconst   <- 1/theta*(2*pi)^(-d/2)*det(Sigma)^(-1/2)
 
     PDF <- pdfconst*pdfgamma
+    if(any(PDF < 0)) stop("Some computed densities were negative. Try using formula = 'indirect'")
 
   }
 
@@ -66,7 +67,6 @@ dmtin <- function(x, mu = rep(0,d), Sigma, theta = 0.01, formula = c("direct", "
     delta <- sapply(1:nrow(x),function(i) t(as.vector(t(x[i,])-mu)) %*% solve(Sigma) %*% as.vector(t(x[i,])-mu))
 
     # substitute delta=0 values with exact numbers
-
     delta <- replace(delta, delta==0, 1/(theta*(2*pi)^(d/2)*(d/2+1))*(1-(1-theta)^(d/2+1)))
 
     n <- d/2
@@ -79,6 +79,8 @@ dmtin <- function(x, mu = rep(0,d), Sigma, theta = 0.01, formula = c("direct", "
     PDF <- 1/theta*(2*pi)^(-d/2)*det(Sigma)^(-1/2)*(2/delta)^(d/2+1)*term
 
   }
+
+
 
   return(PDF)
 
