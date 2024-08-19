@@ -27,7 +27,7 @@
 #' \item{BIC}{Bayesian information criterion.}
 #' \item{KIC}{Kullback information criterion.}??
 #'
-#' #' @examples
+#' @examples
 #' \donttest{
 #' data <- palmerpenguins::penguins
 #' keep <- !rowSums(is.na(data[,3:6])) == 4
