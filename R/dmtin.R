@@ -27,7 +27,7 @@ dmtin <- function(x, mu = rep(0,d), Sigma, theta = 0.01, formula = c("direct", "
     d <- 1
 
   if(is.vector(x)){
-    x <- matrix(x,1,d)
+    x <- matrix(data = x, ncol = d)
     Sigma <- matrix(Sigma,nrow=d,ncol=d)
   }
 
@@ -39,7 +39,7 @@ dmtin <- function(x, mu = rep(0,d), Sigma, theta = 0.01, formula = c("direct", "
 
     # substitute delta=0 values with exact numbers
 
-    delta <- replace(delta, delta==0, 1/(theta*(2*pi)^(d/2)*(d/2+1))*(1-(1-theta)^(d/2+1)))
+    delta <- replace(delta, delta== 0, 1/(theta*(2*pi)^(d/2)*(d/2+1))*(1-(1-theta)^(d/2+1)))
 
     pdfgamma   <- (2/delta)^(d/2+1)*(zipfR::Igamma(a=(d/2+1), x=delta/2*(1-theta), lower = FALSE) - zipfR::Igamma(a=(d/2+1), x=delta/2, lower = FALSE))
     pdfconst   <- 1/theta*(2*pi)^(-d/2)*det(Sigma)^(-1/2)
@@ -51,7 +51,8 @@ dmtin <- function(x, mu = rep(0,d), Sigma, theta = 0.01, formula = c("direct", "
 
   if(formula=="indirect"){
 
-    delta <- sapply(1:nrow(x),function(i) t(as.vector(t(x[i,])-mu)) %*% solve(Sigma) %*% as.vector(t(x[i,])-mu))
+    # delta <- sapply(1:nrow(x),function(i) t(as.vector(t(x[i,])-mu)) %*% solve(Sigma) %*% as.vector(t(x[i,])-mu))
+       delta <- Rfast::mahala(x, mu, Sigma)
 
     intf <- function(w,del){
       w^(d/2)*exp(-w/2*del)
@@ -66,7 +67,8 @@ dmtin <- function(x, mu = rep(0,d), Sigma, theta = 0.01, formula = c("direct", "
 
   if(formula=="series"){
 
-    delta <- sapply(1:nrow(x),function(i) t(as.vector(t(x[i,])-mu)) %*% solve(Sigma) %*% as.vector(t(x[i,])-mu))
+    # delta <- sapply(1:nrow(x),function(i) t(as.vector(t(x[i,])-mu)) %*% solve(Sigma) %*% as.vector(t(x[i,])-mu))
+       delta <- Rfast::mahala(x, mu, Sigma)
 
     # substitute delta=0 values with exact numbers
     delta <- replace(delta, delta==0, 1/(theta*(2*pi)^(d/2)*(d/2+1))*(1-(1-theta)^(d/2+1)))
