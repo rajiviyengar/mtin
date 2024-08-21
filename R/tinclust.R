@@ -47,6 +47,15 @@ tinclust <- function(x, G = 1, max_iter = 100, tol = 10^-1, init_method = c("mcl
      if (p == 1 && any(is.na(x))) stop("NAs not allowed with univariate data.")
      if (any(rowSums(M) == p)) stop("Remove observations that contain only NAs.")
 
+     # misPatterns <- unique(M[mis,])
+     # nMisPatterns <- nrow(misPatterns)
+     # whichMis <- rep(list(0), nMisPatterns)
+     #
+     # print(unique(M[mis,]))
+     #
+     # for (j in 1:nMisPatterns) {
+     #      whichMis[[j]] <- which(apply(M, 1, function (row) all(row == misPatterns[j,])))
+     # }
 
      ####################
      # Model parameters #
@@ -78,11 +87,24 @@ tinclust <- function(x, G = 1, max_iter = 100, tol = 10^-1, init_method = c("mcl
           li[obs,g] <- Pis[g] * dmtin(matrix(x[obs,], ncol = p), Mus[[g]], Sigmas[[g]], Thetas[g], ...)
      }
 
+     # for (j in 1:nMisPatterns) {
+     #      o <- !misPatterns[j,]
+     #      pObs <- sum(o)
+     #
+     #      for (g in 1:G) {
+     #           li[whichMis[[j]],g] <- Pis[g] * dmtin(as.matrix(x[whichMis[[j]],o], ncol = pObs), Mus[[g]][o], as.matrix(Sigmas[[g]][o,o], ncol = pObs), Thetas[g], ...)
+     #      }
+     # }
+
+
+
      for (i in mis) {
           m <- M[i,]
           o <- !m
 
-          li[i,g] <- Pis[g] * dmtin(x[i,o], Mus[[g]][o], Sigmas[[g]][o,o], Thetas[g], ...)
+          for (g in 1:G) {
+               li[i,g] <- Pis[g] * dmtin(x[i,o], Mus[[g]][o], Sigmas[[g]][o,o], Thetas[g], ...)
+          }
      }
 
 
@@ -99,6 +121,18 @@ tinclust <- function(x, G = 1, max_iter = 100, tol = 10^-1, init_method = c("mcl
                den <- pmax(delta * ((zipfR::Igamma((p/2)+1, (1-Thetas[g])*delta/2, lower = FALSE) - zipfR::Igamma((p/2)+1, delta/2, lower = FALSE))), num)
                W[obs,g] <- num/den
           }
+
+          # for (j in 1:nMisPatterns) {
+          #      o <- !misPatterns[j,]
+          #      pObs <- sum(o)
+          #
+          #      for (g in 1:G) {
+          #           delta <- mahalanobis(as.matrix(x[whichMis[[j]],o], ncol = pObs), Mus[[g]][o], Sigmas[[g]][o,o])
+          #           num <- pmax(2 * ((zipfR::Igamma((p/2)+2, (1-Thetas[g])*delta/2, lower = FALSE) - zipfR::Igamma((p/2)+2, delta/2, lower = FALSE))), rep(10^(-322), length(whichMis[[j]])))
+          #           den <- pmax(delta * ((zipfR::Igamma((p/2)+1, (1-Thetas[g])*delta/2, lower = FALSE) - zipfR::Igamma((p/2)+1, delta/2, lower = FALSE))), num)
+          #           W[whichMis[[j]],g] <- num / den
+          #      }
+          # }
 
           for (i in mis) {
                m <- M[i,]
@@ -124,6 +158,14 @@ tinclust <- function(x, G = 1, max_iter = 100, tol = 10^-1, init_method = c("mcl
           # CM-Step #
           ###########
           for (g in 1:G) {
+
+               # for (j in 1:nMisPatterns) {
+               #      m <- misPatterns[j,]
+               #      o <- !m
+               #
+               #      x[whichMis[[j]],m] <- Mus[[g]][m] + Sigmas[[g]][m,o] %*% solve(Sigmas[[g]][o,o]) %*% (x[whichMis[[j]],o] - Mus[[g]][o])
+               # }
+
                for (i in mis) {
                     m <- M[i,]
                     o <- !m
@@ -133,6 +175,21 @@ tinclust <- function(x, G = 1, max_iter = 100, tol = 10^-1, init_method = c("mcl
 
                Mus[[g]] <- colSums(Z[,g] * W[,g] * x) / sum(Z[,g] * W[,g])
                sig_temp <- crossprod(sqrt(Z[obs,g] * W[obs,g]) * sweep(x[obs,], 2, Mus[[g]]))
+
+               # for (j in 1:nMisPatterns) {
+               #      m <- misPatterns[j,]
+               #      o <- !m
+               #      pObs <- sum(o)
+               #      pMis <- sum(m)
+               #
+               #      cross <- matrix(data = rep(0, p^2), nrow = p)
+               #      cross[o,o] <- crossprod(sqrt(Z[whichMis[[j]],g] * W[whichMis[[j]],g]) * sweep(as.matrix(x[whichMis[[j]],o], ncol = pObs), 2, Mus[[g]][o]))
+               #      cross[o,m] <- crossprod(sqrt(Z[whichMis[[j]],g] * W[whichMis[[j]],g]) * sweep(as.matrix(x[whichMis[[j]],o], ncol = pObs), 2, Mus[[g]][o]), sqrt(Z[whichMis[[j]],g] * W[whichMis[[j]],g]) * sweep(as.matrix(x[whichMis[[j]],m], ncol = pMis), 2, Mus[[g]][m]))
+               #      cross[m,o] <- t(cross[o,m])
+               #      cross[m,m] <- sum(Z[whichMis[[j]],g]) * (Sigmas[[g]][m,m] - Sigmas[[g]][m,o] %*% solve(Sigmas[[g]][o,o]) %*% Sigmas[[g]][o,m]) + crossprod(sqrt(Z[whichMis[[j]],g] * W[whichMis[[j]],g]) * sweep(as.matrix(x[whichMis[[j]],m], ncol = pMis), 2, Mus[[g]][m]))
+               #
+               #      sig_temp <- sig_temp + cross
+               # }
 
                for (i in mis) {
                     m <- M[i,]
@@ -158,11 +215,20 @@ tinclust <- function(x, G = 1, max_iter = 100, tol = 10^-1, init_method = c("mcl
                li[obs,g] <- sum(Z[,g]) * dmtin(as.matrix(x[obs,], ncol = p), Mus[[g]], Sigmas[[g]], Thetas[g], ...) / n
           }
 
+          # for (j in 1:nMisPatterns) {
+          #      o <- !misPatterns[j,]
+          #      pObs <- sum(o)
+          #
+          #      for (g in 1:G) {
+          #           li[whichMis[[j]],g] <- sum(Z[,g]) * dmtin(as.matrix(x[whichMis[[j]],o], ncol = pObs), Mus[[g]][o], as.matrix(Sigmas[[g]][o,o], ncol = pObs), Thetas[g], ...) / n
+          #      }
+          # }
+
           for (i in mis) {
                o <- !M[i,]
 
                for (g in 1:G) {
-                    li[i,g] <- sum(Z[,g]) * dmtin(x[i,o], Mus[[g]][o], Sigmas[[g]][o,o], Thetas[g], ...)
+                    li[i,g] <- sum(Z[,g]) * dmtin(x[i,o], Mus[[g]][o], Sigmas[[g]][o,o], Thetas[g], ...) / n
                }
           }
 
