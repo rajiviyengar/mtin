@@ -14,7 +14,7 @@
 #' rmtin(10,mu=rep(0,d),Sigma=diag(d),theta=0.4)
 #'
 #' @export
-rmtin <- function(n, mu = rep(0,d), Sigma, theta = 0.01, norm.dens = c("dnorm", "dmvnorm", "Rfast")){
+rmtin <- function(n, mu = rep(0,d), Sigma, theta = 0.01, norm.dens = c("dmnorm", "dmvnorm", "Rfast")){
      norm.dens <- match.arg(norm.dens)
 
   if(missing(Sigma))
