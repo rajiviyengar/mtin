@@ -329,9 +329,10 @@ tinreg <- function(x, y, G = 1, max_iter = 100, tol = 10^-1, model = c("fixed", 
           for (g in 1:G) {
                Betas[[g]] <- Rfast::mat.mult(solve(Rfast::Crossprod(x[obs_y,], Z[obs_y,g] * x[obs_y,])), Rfast::Crossprod(x[obs_y,], Z[obs_y,] * as.matrix(y[obs_y,], ncol = p_y)))
                Mus_x[[g]] <- Rfast::colsums(as.matrix(x[as.logical(Z[, g]),2:p_x], ncol = p_x - 1)) / sum(Z[,g])
-               Sigmas_y[[g]] <- Rfast::cova(as.matrix(y[as.logical(Z[, g]), ], ncol = p_y))
-               Sigmas_x[[g]] <- Rfast::cova(as.matrix(x[as.logical(Z[, g]), 2:p_x], ncol = p_x))
                y_center[[g]][obs_y,] <- as.matrix(y[obs_y,], ncol = p_y) - Rfast::mat.mult(x[obs_y,], Betas[[g]])
+               Sigmas_y[[g]] <- Rfast::cova(as.matrix(y_center[[g]][as.logical(Z[, g]), ], ncol = p_y))
+               Sigmas_x[[g]] <- Rfast::cova(as.matrix(x[as.logical(Z[, g]), 2:p_x], ncol = p_x))
+
                li[,g] <- sum(Z[,g]) * dmtin(as.matrix(x[,2:p_x], ncol = p_x - 1), Mus_x[[g]], Sigmas_x[[g]], Thetas_x[g], ...) / n
                li[obs_y,g] <- li[obs_y,g] * dmtin(as.matrix(y_center[[g]][obs_y,], ncol = p_y), rep(0, p_y), Sigmas_y[[g]], Thetas_y[g], ...)
           }
@@ -421,7 +422,7 @@ tinreg <- function(x, y, G = 1, max_iter = 100, tol = 10^-1, model = c("fixed", 
 
                     for (i in mis_y) {
                          m <- M_y[i,]
-                         o <- !M_y[i,]
+                         o <- !m
 
                          Mu <- x[i,] %*% Betas[[g]]
 
