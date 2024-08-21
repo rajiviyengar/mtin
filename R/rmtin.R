@@ -14,7 +14,8 @@
 #' rmtin(10,mu=rep(0,d),Sigma=diag(d),theta=0.4)
 #'
 #' @export
-rmtin <- function(n, mu = rep(0,d), Sigma, theta = 0.01, norm.dens = "dmnorm"){
+rmtin <- function(n, mu = rep(0,d), Sigma, theta = 0.01, norm.dens = c("dnorm", "dmvnorm", "Rfast")){
+     norm.dens <- match.arg(norm.dens)
 
   if(missing(Sigma))
     stop("Sigma is missing")
@@ -28,6 +29,12 @@ rmtin <- function(n, mu = rep(0,d), Sigma, theta = 0.01, norm.dens = "dmnorm"){
 
   X <- matrix(0,n,d)
   w <- stats::runif(n=n,min=1-theta,1)
+
+  if(norm.dens == 'Rfast') {
+       for (i in 1:n) {
+            X[i,] <- Rfast::rmvnorm(n = 1, mu = mu, sigma = Sigma)
+       }
+  }
   if(norm.dens == "dmnorm")
     for(i in 1:n)
       X[i,] <- mnormt::rmnorm(n = 1, mean = mu, varcov = Sigma/w[i])
