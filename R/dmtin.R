@@ -33,7 +33,9 @@ dmtin <- function(x, mu = rep(0,d), Sigma, theta = 0.01, formula = c("direct", "
 
   if(formula=="direct"){
 
-    delta <- sapply(1:nrow(x),function(i) t(as.vector(t(x[i,])-mu)) %*% solve(Sigma) %*% as.vector(t(x[i,])-mu))
+    # delta <- sapply(1:nrow(x),function(i) t(as.vector(t(x[i,])-mu)) %*% solve(Sigma) %*% as.vector(t(x[i,])-mu))
+      delta <- Rfast::mahala(x, mu, Sigma)
+
 
     # substitute delta=0 values with exact numbers
 
