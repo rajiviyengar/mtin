@@ -327,7 +327,7 @@ tinreg <- function(x, y, G = 1, max_iter = 100, tol = 10^-1, model = c("fixed", 
           Z <- init_clusters(cbind(x,y), G, obsInd = obs_y, init_method = init_method)
 
           for (g in 1:G) {
-               Betas[[g]] <- Rfast::mat.mult(solve(Rfast::Crossprod(x[obs_y,], Z[obs_y,g] * x[obs_y,])), Rfast::Crossprod(x[obs_y,], Z[obs_y,] * as.matrix(y[obs_y,], ncol = p_y)))
+               Betas[[g]] <- Rfast::mat.mult(solve(Rfast::Crossprod(Z[obs_y,g] * x[obs_y,], x[obs_y,])), Rfast::Crossprod(x[obs_y,], Z[obs_y,] * as.matrix(y[obs_y,], ncol = p_y)))
                Mus_x[[g]] <- Rfast::colsums(as.matrix(x[as.logical(Z[, g]),2:p_x], ncol = p_x - 1)) / sum(Z[,g])
                y_center[[g]][obs_y,] <- as.matrix(y[obs_y,], ncol = p_y) - Rfast::mat.mult(x[obs_y,], Betas[[g]])
                Sigmas_y[[g]] <- Rfast::cova(as.matrix(y_center[[g]][as.logical(Z[, g]), ], ncol = p_y))
