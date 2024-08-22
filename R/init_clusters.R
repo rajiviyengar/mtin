@@ -19,7 +19,7 @@ init_clusters <- function(X, G, obsInd = NULL, init_method = c("mclust", "kmedoi
      if (init_method == "mclust") {
           init <- mclust::Mclust(data = X[obsInd,], G = G)
 
-          for (i in obsInd) {
+          for (i in 1:length(obsInd)) {
                Z[obsInd[i], init$classification[i]] <- 1
           }
 
@@ -29,7 +29,7 @@ init_clusters <- function(X, G, obsInd = NULL, init_method = c("mclust", "kmedoi
      if (init_method == "kmedoids") {
           init <- cluster::pam(x = X[obsInd,], k = G)
 
-          for (i in obsInd) {
+          for (i in 1:length(obsInd)) {
                Z[obsInd[i], init$clustering[i]] <- 1
           }
 
@@ -39,7 +39,7 @@ init_clusters <- function(X, G, obsInd = NULL, init_method = c("mclust", "kmedoi
      if (init_method == "kmeans") {
           init <- stats::kmeans(x = X[obsInd,], centers = G)
 
-          for (i in obsInd) {
+          for (i in 1:length(obsInd)) {
                Z[obsInd[i], init$cluster[i]] <- 1
           }
 
@@ -51,7 +51,7 @@ init_clusters <- function(X, G, obsInd = NULL, init_method = c("mclust", "kmedoi
           tree <- stats::hclust(d)
           init <- stats::cutree(tree = tree, k = G)
 
-          for (i in obsInd) {
+          for (i in 1:length(obsInd)) {
                Z[obsInd[i], init[i]] <- 1
           }
 
