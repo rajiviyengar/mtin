@@ -27,7 +27,7 @@ dmtin <- function(x, mu = rep(0,d), Sigma, theta = 0.01, formula = c("direct", "
     d <- 1
 
   if(is.vector(x)){
-    x <- matrix(x,1,d)
+    x <- matrix(x, ncol = d)
     Sigma <- matrix(Sigma,nrow=d,ncol=d)
   }
 
