@@ -85,10 +85,10 @@ tinreg <- function(x, y, G = 1, max_iter = 100, tol = 10^-1, model = c("fixed", 
           Z <- init_clusters(cbind(x,y), G, obsInd = obs_y, init_method = init_method)
 
           for (g in 1:G) {
-               Betas[[g]] <- solve(t(as.matrix(x[obs_y,], ncol = p_x)) %*% diag(Z[obs_y,g]) %*% as.matrix(x[obs_y,], ncol = p_x)) %*% t(as.matrix(x[obs_y,], ncol = p_x)) %*% diag(Z[obs_y,g]) %*% as.matrix(y[obs_y,], ncol = p_y)
-               Sigmas_y[[g]] <- cov(as.matrix(y[as.logical(Z[, g]), ], ncol = p_y))
-               y_center[[g]][obs_y,] <- y[obs_y,] - as.matrix(x[obs_y,], ncol = p_x) %*% Betas[[g]]
-               li[obs_y,g] <- sum(Z[,g]) * dmtin(as.matrix(y_center[[g]][obs_y,], ncol = p_y), rep(0, p_y), Sigmas_y[[g]], Thetas_y[g], ...) / n
+               Betas[[g]] <- Rfast::mat.mult(solve(Rfast::Crossprod(Z[obs_y,g] * as.matrix(x[obs_y,], ncol = p_x), matrix(x[obs_y,], ncol = p_x))), Rfast::Crossprod(Z[obs_y,g] * matrix(x[obs_y,], ncol = p_x), matrix(y[obs_y,], ncol = p_y)))
+               y_center[[g]][obs_y,] <- y[obs_y,] - Rfast::mat.mult(matrix(x[obs_y,], ncol = p_x), Betas[[g]])
+               Sigmas_y[[g]] <- Rfast::cova(matrix(y_center[[g]][as.logical(Z[, g]), ], ncol = p_y))
+               li[obs_y,g] <- sum(Z[,g]) * dmtin(matrix(y_center[[g]][obs_y,], ncol = p_y), rep(0, p_y), Sigmas_y[[g]], Thetas_y[g], ...) / n
           }
 
           for (i in mis_y) {
@@ -125,7 +125,7 @@ tinreg <- function(x, y, G = 1, max_iter = 100, tol = 10^-1, model = c("fixed", 
                # E-Step: W #
                #############
                for (g in 1:G) {
-                    delta <- Rfast::mahala(as.matrix(y_center[[g]][obs_y,], ncol = p_y), rep(0, p_y), Sigmas_y[[g]])
+                    delta <- Rfast::mahala(matrix(y_center[[g]][obs_y,], ncol = p_y), rep(0, p_y), Sigmas_y[[g]])
                     num <- Rfast::Pmax(2 * ((zipfR::Igamma((p_y/2)+2, (1-Thetas_y[g])*delta/2, lower = FALSE) - zipfR::Igamma((p_y/2)+2, delta/2, lower = FALSE))), rep(10^(-322), length(obs_y)))
                     den <- Rfast::Pmax(delta * ((zipfR::Igamma((p_y/2)+1, (1-Thetas_y[g])*delta/2, lower = FALSE) - zipfR::Igamma((p_y/2)+1, delta/2, lower = FALSE))), num)
                     W_y[obs_y,g] <- num/den
@@ -137,7 +137,7 @@ tinreg <- function(x, y, G = 1, max_iter = 100, tol = 10^-1, model = c("fixed", 
                     pObs <- sum(!M_y[i,])
 
                     for (g in 1:G) {
-                         delta <- Rfast::mahala(as.matrix(y_center[[g]][i,o], ncol = pObs), rep(0, pObs), Sigmas_y[[g]][o,o])
+                         delta <- Rfast::mahala(matrix(y_center[[g]][i,o], ncol = pObs), rep(0, pObs), Sigmas_y[[g]][o,o])
                          num <- max(2 * ((zipfR::Igamma((pObs/2)+2, (1-Thetas_y[g])*delta/2, lower = FALSE) - zipfR::Igamma((pObs/2)+2, delta/2, lower = FALSE))), 10^(-322))
                          den <- max(delta * ((zipfR::Igamma((pObs/2)+1, (1-Thetas_y[g])*delta/2, lower = FALSE) - zipfR::Igamma((pObs/2)+1, delta/2, lower = FALSE))), num)
                          W_y[i,g] <- num / den
@@ -163,11 +163,11 @@ tinreg <- function(x, y, G = 1, max_iter = 100, tol = 10^-1, model = c("fixed", 
                          Mu <- x[i,] %*% Betas[[g]]
 
                          y[i,m] <- Mu[m] + Sigmas_y[[g]][m,o] %*% solve(Sigmas_y[[g]][o,o]) %*% (y[i,o] - Mu[o])
-
                     }
 
-                    Betas[[g]] <- Rfast::mat.mult(solve(Rfast::Crossprod(Z[,g] * W_y[,g] * x, x)), Rfast::Crossprod(x, Z[,g] * W_y[,g] * as.matrix(y, ncol = p_y)))
-                    sig_temp_y <- Rfast::Crossprod(Z[obs_y,g] * W_y[obs_y,g] * (as.matrix(y[obs_y,], ncol = p_y) - Rfast::mat.mult(x[obs_y,], Betas[[g]])), (as.matrix(y[obs_y,], ncol = p_y) - Rfast::mat.mult(x[obs_y,], Betas[[g]])))
+                    Betas[[g]] <- Rfast::mat.mult(solve(Rfast::Crossprod(Z[,g] * W_y[,g] * x, x)), Rfast::Crossprod(x, Z[,g] * W_y[,g] * matrix(y, ncol = p_y)))
+                    y_center[[g]] <- y - Rfast::mat.mult(x, Betas[[g]])
+                    sig_temp_y <- Rfast::Crossprod(Z[obs_y,g] * W_y[obs_y,g] * matrix(y_center[[g]][obs_y,], ncol = p_y), matrix(y_center[[g]][obs_y,], ncol = p_y))
 
                     for (i in mis_y) {
                          m <- M_y[i,]
@@ -175,9 +175,7 @@ tinreg <- function(x, y, G = 1, max_iter = 100, tol = 10^-1, model = c("fixed", 
 
                          Mu <- x[i,] %*% Betas[[g]]
 
-
                          y[i,m] <- Mu[m] + Sigmas_y[[g]][m,o] %*% solve(Sigmas_y[[g]][o,o]) %*% (y[i,o] - Mu[o])
-
 
                          cross <- matrix(data = rep(0, p_y^2), nrow = p_y)
                          cross[o,o] <- Z[i,g] * W_y[i,g] * (y[i,o] - Mu[o]) %*% t(y[i,o] - Mu[o])
@@ -188,18 +186,16 @@ tinreg <- function(x, y, G = 1, max_iter = 100, tol = 10^-1, model = c("fixed", 
                          sig_temp_y <- sig_temp_y + cross
                     }
 
-
                     Sigmas_y[[g]] <- sig_temp_y / sum(Z[,g])
+                    Thetas_y[g] <- CMstep2(matrix(y_center[[g]], ncol = p_y), Z[,g], rep(0, p_y), Sigmas_y[[g]], naMat = M_y, obsInd = obs_y, misInd = mis_y, ...)
                     Pis[g] <- sum(Z[,g]) / n
-                    y_center[[g]] <- y - x %*% Betas[[g]]
-                    Thetas_y[g] <- CMstep2(as.matrix(y_center[[g]], ncol = p_y), Z[,g], rep(0, p_y), Sigmas_y[[g]], naMat = M_y, obsInd = obs_y, misInd = mis_y, ...)
                }
 
                ######################
                # Compute Likelihood #
                ######################
                for (g in 1:G) {
-                    li[obs_y,g] <- sum(Z[,g]) * dmtin(as.matrix(y_center[[g]][obs_y,], ncol = p_y), rep(0, p_y), Sigmas_y[[g]], Thetas_y[g], ...) / n
+                    li[obs_y,g] <- sum(Z[,g]) * dmtin(matrix(y_center[[g]][obs_y,], ncol = p_y), rep(0, p_y), Sigmas_y[[g]], Thetas_y[g], ...) / n
 
                }
 
@@ -327,7 +323,7 @@ tinreg <- function(x, y, G = 1, max_iter = 100, tol = 10^-1, model = c("fixed", 
           Z <- init_clusters(cbind(x,y), G, obsInd = obs_y, init_method = init_method)
 
           for (g in 1:G) {
-               Betas[[g]] <- Rfast::mat.mult(solve(Rfast::Crossprod(Z[obs_y,g] * x[obs_y,], x[obs_y,])), Rfast::Crossprod(x[obs_y,], Z[obs_y,] * as.matrix(y[obs_y,], ncol = p_y)))
+               Betas[[g]] <- Rfast::mat.mult(solve(Rfast::Crossprod(Z[obs_y,g] * as.matrix(x[obs_y,], ncol = p_x), matrix(x[obs_y,], ncol = p_x))), Rfast::Crossprod(Z[obs_y,g] * matrix(x[obs_y,], ncol = p_x), matrix(y[obs_y,], ncol = p_y)))
                Mus_x[[g]] <- Rfast::colsums(as.matrix(x[as.logical(Z[, g]),2:p_x], ncol = p_x - 1)) / sum(Z[,g])
                y_center[[g]][obs_y,] <- as.matrix(y[obs_y,], ncol = p_y) - Rfast::mat.mult(x[obs_y,], Betas[[g]])
                Sigmas_y[[g]] <- Rfast::cova(as.matrix(y_center[[g]][as.logical(Z[, g]), ], ncol = p_y))
@@ -418,7 +414,7 @@ tinreg <- function(x, y, G = 1, max_iter = 100, tol = 10^-1, model = c("fixed", 
                     Betas[[g]] <- Rfast::mat.mult(solve(Rfast::Crossprod(x, Z[,g] * W_y[,g] * x)), Rfast::Crossprod(x, Z[,g] * W_y[,g] * y))
                     y_center[[g]] <- as.matrix(y, ncol = p_y) - Rfast::mat.mult(x, Betas[[g]])
                     Sigmas_x[[g]] <- Rfast::Crossprod(Z[,g] * W_x[,g] * Rfast::eachrow(as.matrix(x[, 2:p_x], ncol = p_x - 1), Mus_x[[g]], '-'), Rfast::eachrow(as.matrix(x[, 2:p_x], ncol = p_x - 1), Mus_x[[g]], '-')) / sum(Z[,g])
-                    sig_temp_y <- Rfast::Crossprod(Z[obs_y,g] * W_y[obs_y,g] * y_center[[g]][obs_y,], y_center[[g]][obs_y,])
+                    sig_temp_y <- Rfast::Crossprod(Z[obs_y,g] * W_y[obs_y,g] * matrix(y_center[[g]][obs_y,], ncol = p_y), matrix(y_center[[g]][obs_y,], ncol = p_y))
 
                     for (i in mis_y) {
                          m <- M_y[i,]
@@ -426,9 +422,7 @@ tinreg <- function(x, y, G = 1, max_iter = 100, tol = 10^-1, model = c("fixed", 
 
                          Mu <- x[i,] %*% Betas[[g]]
 
-
                          y[i,m] <- Mu[m] + Sigmas_y[[g]][m,o] %*% solve(Sigmas_y[[g]][o,o]) %*% (y[i,o] - Mu[o])
-
 
                          cross <- matrix(data = rep(0, p_y^2), nrow = p_y)
                          cross[o,o] <- Z[i,g] * W_y[i,g] * (y[i,o] - Mu[o]) %*% t(y[i,o] - Mu[o])
@@ -438,7 +432,6 @@ tinreg <- function(x, y, G = 1, max_iter = 100, tol = 10^-1, model = c("fixed", 
 
                          sig_temp_y <- sig_temp_y + cross
                     }
-
 
                     Sigmas_y[[g]] <- sig_temp_y / sum(Z[,g])
                     Thetas_y[g] <- CMstep2(as.matrix(y_center[[g]], ncol = p_y), Z[,g], rep(0, p_y), Sigmas_y[[g]], naMat = M_y, obsInd = obs_y, misInd = mis_y, ...)
