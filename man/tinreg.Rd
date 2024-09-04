@@ -63,7 +63,7 @@ keep <- !rowSums(is.na(data[,3:6])) == 4
 data <- data[keep,]
 
 res <- tinreg(x = data$flipper_length_mm, y = data$bill_length_mm, G = 3, model = 'random')
-plot(res$X, res$Y, col = res$cluster)
+plot(res$X[,2], res$Y, col = res$cluster)
 abline(a = res$Beta[[1]][1,1], b = res$Beta[[1]][2,1], col = 'black')
 abline(a = res$Beta[[2]][1,1], b = res$Beta[[2]][2,1], col = 'red')
 abline(a = res$Beta[[3]][1,1], b = res$Beta[[3]][2,1], col = 'green')
