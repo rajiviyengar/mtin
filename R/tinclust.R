@@ -59,6 +59,8 @@ tinclust <- function(x, G = 1, max_iter = 100, tol = 10^-1, init_method = c("mcl
                     whichMis[[j]] <- which(apply(M, 1, function (row) all(row == misPatterns[j,])))
                }
 
+          } else {
+               nMisPatterns <- NULL
           }
 
           ####################
