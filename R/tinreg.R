@@ -381,7 +381,7 @@ tinreg <- function(x, y, G = 1, max_iter = 100, tol = 10^-1, model = c("fixed", 
                     pObs <- sum(o)
 
                     for (g in 1:G) {
-                         delta <- Rfast::mahala(as.matrix(y_center[[g]][i,o], ncol = pObs), rep(0, pObs), Sigmas_y[[g]][o,o])
+                         delta <- Rfast::mahala(matrix(y_center[[g]][i,o], ncol = pObs), rep(0, pObs), Sigmas_y[[g]][o,o])
                          num <- max(2 * ((zipfR::Igamma((pObs/2)+2, (1-Thetas_y[g])*delta/2, lower = FALSE) - zipfR::Igamma((pObs/2)+2, delta/2, lower = FALSE))), 10^(-322))
                          den <- max(delta * ((zipfR::Igamma((pObs/2)+1, (1-Thetas_y[g])*delta/2, lower = FALSE) - zipfR::Igamma((pObs/2)+1, delta/2, lower = FALSE))), num)
                          W_y[i,g] <- num / den
